@@ -223,6 +223,11 @@ func (c *counter) Inc(v int64) {
 	c.counter.Add(float64(v))
 }
 
+func (c *counter) WithTraceID(traceID *string) metrics.Counter {
+	c.counter.WithTraceID(traceID)
+	return c
+}
+
 type gauge struct {
 	gauge prometheus.Gauge
 }

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	kit "github.com/go-kit/kit/metrics"
+	"github.com/uber/jaeger-lib/metrics"
 )
 
 // Counter is an adapter from go-kit Counter to jaeger-lib Counter
@@ -33,6 +34,11 @@ func NewCounter(counter kit.Counter) *Counter {
 // Inc adds the given value to the counter.
 func (c *Counter) Inc(delta int64) {
 	c.counter.Add(float64(delta))
+}
+
+func (c *Counter) WithTraceID(traceID *string) metrics.Counter {
+	panic("not implemented")
+	return c
 }
 
 // Gauge is an adapter from go-kit Gauge to jaeger-lib Gauge
@@ -65,6 +71,11 @@ func (t *Timer) Record(delta time.Duration) {
 	t.hist.Observe(delta.Seconds())
 }
 
+func (t *Timer) WithTraceID(traceID *string) metrics.Timer {
+	panic("not implemented")
+	return t
+}
+
 // Histogram is an adapter from go-kit Histogram to jaeger-lib Histogram
 type Histogram struct {
 	hist kit.Histogram
@@ -78,4 +89,9 @@ func NewHistogram(hist kit.Histogram) *Histogram {
 // Record saves the value passed in.
 func (t *Histogram) Record(value float64) {
 	t.hist.Observe(value)
+}
+
+func (t *Histogram) WithTraceID(traceID *string) metrics.Histogram {
+	panic("not implemented")
+	return t
 }

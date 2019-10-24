@@ -18,6 +18,7 @@ package metrics
 type Counter interface {
 	// Inc adds the given value to the counter.
 	Inc(int64)
+	WithTraceID(traceID *string) Counter
 }
 
 // NullCounter counter that does nothing
@@ -26,3 +27,5 @@ var NullCounter Counter = nullCounter{}
 type nullCounter struct{}
 
 func (nullCounter) Inc(int64) {}
+
+func (n nullCounter) WithTraceID(traceID *string) Counter { return n }
