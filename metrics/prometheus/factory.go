@@ -223,8 +223,8 @@ func (c *counter) Inc(v int64) {
 	c.counter.Add(float64(v))
 }
 
-func (c *counter) WithTraceID(traceID *string) metrics.Counter {
-	c.counter.WithTraceID(traceID)
+func (c *counter) WithTraceID(traceID string) metrics.Counter {
+	c.counter.WithExemplar("trace_id", traceID)
 	return c
 }
 
@@ -238,6 +238,7 @@ func (g *gauge) Update(v int64) {
 
 type observer interface {
 	Observe(v float64)
+	WithExemplar(key, value string)
 }
 
 type timer struct {
@@ -248,12 +249,22 @@ func (t *timer) Record(v time.Duration) {
 	t.histogram.Observe(float64(v.Nanoseconds()) / float64(time.Second/time.Nanosecond))
 }
 
+func (t *timer) WithTraceID(traceID string) metrics.Timer {
+	t.histogram.WithExemplar("trace_id", traceID)
+	return t
+}
+
 type histogram struct {
 	histogram observer
 }
 
 func (h *histogram) Record(v float64) {
 	h.histogram.Observe(v)
+}
+
+func (h *histogram) WithTraceID(traceID string) metrics.Histogram {
+	h.histogram.WithExemplar("trace_id", traceID)
+	return h
 }
 
 func (f *Factory) subScope(name string) string {

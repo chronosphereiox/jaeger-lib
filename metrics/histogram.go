@@ -18,6 +18,7 @@ package metrics
 type Histogram interface {
 	// Records the value passed in.
 	Record(float64)
+	WithTraceID(traceID string) Histogram
 }
 
 // NullHistogram that does nothing
@@ -26,3 +27,5 @@ var NullHistogram Histogram = nullHistogram{}
 type nullHistogram struct{}
 
 func (nullHistogram) Record(float64) {}
+
+func (n nullHistogram) WithTraceID(traceID string) Histogram { return n }

@@ -36,7 +36,7 @@ func (c *Counter) Inc(delta int64) {
 	c.counter.Add(float64(delta))
 }
 
-func (c *Counter) WithTraceID(traceID *string) metrics.Counter {
+func (c *Counter) WithTraceID(traceID string) metrics.Counter {
 	panic("not implemented")
 	return c
 }
@@ -71,7 +71,7 @@ func (t *Timer) Record(delta time.Duration) {
 	t.hist.Observe(delta.Seconds())
 }
 
-func (t *Timer) WithTraceID(traceID *string) metrics.Timer {
+func (t *Timer) WithTraceID(traceID string) metrics.Timer {
 	panic("not implemented")
 	return t
 }
@@ -91,7 +91,7 @@ func (t *Histogram) Record(value float64) {
 	t.hist.Observe(value)
 }
 
-func (t *Histogram) WithTraceID(traceID *string) metrics.Histogram {
+func (t *Histogram) WithTraceID(traceID string) metrics.Histogram {
 	panic("not implemented")
 	return t
 }
