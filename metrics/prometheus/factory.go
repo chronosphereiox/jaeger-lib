@@ -224,7 +224,11 @@ func (c *counter) Inc(v int64) {
 }
 
 func (c *counter) WithTraceID(traceID string) metrics.Counter {
-	c.counter.WithExemplar("trace_id", traceID)
+	t, s := parseTraceID(traceID)
+	c.counter.WithExemplar("trace_id", t)
+	if len(s) > 0 {
+		c.counter.WithExemplar("span_id", s)
+	}
 	return c
 }
 
@@ -250,7 +254,12 @@ func (t *timer) Record(v time.Duration) {
 }
 
 func (t *timer) WithTraceID(traceID string) metrics.Timer {
-	t.histogram.WithExemplar("trace_id", traceID)
+	tr, sp := parseTraceID(traceID)
+	t.histogram.WithExemplar("trace_id", tr)
+	if len(sp) > 0 {
+		t.histogram.WithExemplar("span_id", sp)
+	}
+
 	return t
 }
 
@@ -263,7 +272,12 @@ func (h *histogram) Record(v float64) {
 }
 
 func (h *histogram) WithTraceID(traceID string) metrics.Histogram {
-	h.histogram.WithExemplar("trace_id", traceID)
+	tr, sp := parseTraceID(traceID)
+	h.histogram.WithExemplar("trace_id", tr)
+	if len(sp) > 0 {
+		h.histogram.WithExemplar("span_id", sp)
+	}
+
 	return h
 }
 
@@ -314,4 +328,13 @@ func counterNamingConvention(name string) string {
 		name += "_total"
 	}
 	return name
+}
+
+func parseTraceID(combinedTraceID string) (traceID, spanID string) {
+	parts := strings.Split(combinedTraceID, ":")
+	if len(parts) == 0 || len(parts) == 1 {
+		return combinedTraceID, ""
+	}
+
+	return parts[0], parts[1]
 }
