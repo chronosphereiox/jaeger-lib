@@ -49,6 +49,9 @@ const (
 
 	// SeparatorColon uses a colon as separator
 	SeparatorColon = ':'
+
+	traceIDTag = "trace_id"
+	spanIDTag  = "span_id"
 )
 
 // Option is a function that sets some option for the Factory constructor.
@@ -223,13 +226,18 @@ func (c *counter) Inc(v int64) {
 	c.counter.Add(float64(v))
 }
 
-func (c *counter) WithTraceID(traceID string) metrics.Counter {
-	t, s := parseTraceID(traceID)
-	c.counter.WithExemplar("trace_id", t)
-	if len(s) > 0 {
-		c.counter.WithExemplar("span_id", s)
+func (c *counter) IncWithExemplar(v int64, traceID string) {
+	ctr, ok := c.counter.(prometheus.ExemplarAdder)
+	if ok {
+		labels := make(map[string]string, 2)
+		t, s := parseTraceID(traceID)
+		labels[traceIDTag] = t
+		if len(s) > 0 {
+			labels[spanIDTag] = s
+		}
+		ctr.AddWithExemplar(float64(v), labels)
 	}
-	return c
+	c.Inc(v)
 }
 
 type gauge struct {
@@ -242,7 +250,6 @@ func (g *gauge) Update(v int64) {
 
 type observer interface {
 	Observe(v float64)
-	WithExemplar(key, value string)
 }
 
 type timer struct {
@@ -253,14 +260,19 @@ func (t *timer) Record(v time.Duration) {
 	t.histogram.Observe(float64(v.Nanoseconds()) / float64(time.Second/time.Nanosecond))
 }
 
-func (t *timer) WithTraceID(traceID string) metrics.Timer {
-	tr, sp := parseTraceID(traceID)
-	t.histogram.WithExemplar("trace_id", tr)
-	if len(sp) > 0 {
-		t.histogram.WithExemplar("span_id", sp)
+func (t *timer) RecordWithExemplar(v time.Duration, traceID string) {
+	hist, ok := t.histogram.(prometheus.ExemplarObserver)
+	if ok {
+		labels := make(map[string]string, 2)
+		t, s := parseTraceID(traceID)
+		labels[traceIDTag] = t
+		if len(s) > 0 {
+			labels[spanIDTag] = s
+		}
+		hist.ObserveWithExemplar(float64(v.Nanoseconds())/float64(time.Second/time.Nanosecond), labels)
+		return
 	}
-
-	return t
+	t.Record(v)
 }
 
 type histogram struct {
@@ -271,14 +283,19 @@ func (h *histogram) Record(v float64) {
 	h.histogram.Observe(v)
 }
 
-func (h *histogram) WithTraceID(traceID string) metrics.Histogram {
-	tr, sp := parseTraceID(traceID)
-	h.histogram.WithExemplar("trace_id", tr)
-	if len(sp) > 0 {
-		h.histogram.WithExemplar("span_id", sp)
+func (h *histogram) RecordWithExemplar(v float64, traceID string) {
+	hist, ok := h.histogram.(prometheus.ExemplarObserver)
+	if ok {
+		labels := make(map[string]string, 2)
+		t, s := parseTraceID(traceID)
+		labels[traceIDTag] = t
+		if len(s) > 0 {
+			labels[spanIDTag] = s
+		}
+		hist.ObserveWithExemplar(v, labels)
+		return
 	}
-
-	return h
+	h.Record(v)
 }
 
 func (f *Factory) subScope(name string) string {

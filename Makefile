@@ -6,7 +6,7 @@ ALL_SRC := $(shell find . -name "*.go" | grep -v -e vendor \
         -e ".*/_.*" \
         -e ".*/mocks.*")
 
-USE_DEP := true
+USE_DEP := false
 
 RACE=-race
 GOTEST=go test -v $(RACE)
